@@ -1,12 +1,19 @@
-// Define SVG area dimensions
-var svgWidth = 1000;
-var svgHeight = 600;
+var svgArea = d3.select("body").select("svg");
+
+// clear svg is not empty
+  if (!svgArea.empty()) {
+    svgArea.remove();
+  }
+
+// Defining SVG area dimensions
+var svgWidth = window.innerWidth;
+var svgHeight = window.innerHeight;
 
 // Define the chart's margins as an object
 var chartMargin = {
-    top: 20,
-    right: 40,
-    bottom: 60,
+    top: 100,
+    right: 100,
+    bottom: 100,
     left: 100,
 };
 
@@ -15,7 +22,8 @@ var chartWidth = svgWidth - chartMargin.left - chartMargin.right;
 var chartHeight = svgHeight - chartMargin.top - chartMargin.bottom;
 
 // Select body, append SVG area to it, and set the dimensions
-var svg = d3.select("#scatter")
+var svg = d3
+    .select("#scatter")
     .append("svg")
     .attr("height", svgHeight)
     .attr("width", svgWidth);
@@ -24,79 +32,93 @@ var svg = d3.select("#scatter")
 var chartGroup = svg.append("g")
     .attr("transform", `translate(${chartMargin.left}, ${chartMargin.top})`);
 
+// Import data
+d3.csv("/assets/data/data.csv").then(function(SmokeData) {
+    console.log(SmokeData);
+    SmokeData.forEach(function(data){
+        data.age = +data.age;
+        data.smokes = +data.smokes;
+        data.abbr = data.abbr
+    });
 
-    d3.csv("/assets/data/data.csv").then(function(data) {
-        console.log(data);
+        // xLinearScale function above csv import
+        var xLinearScale = d3.scaleLinear()
+            .domain(d3.extent(SmokeData, d => d.age))
+            .range([0, chartWidth]);
 
-        var age = data.map(data => data.age);
-        console.log("age", age);
+        // Create y scale function
+        var yLinearScale = d3.scaleLinear()
+            .domain([d3.extent(SmokeData, d => d.smokes)])
+            .range([chartHeight, 0]);
 
-        var smokes = data.map(data => data.smokes);
-        console.log("smokes", smokes);
+        var bottomAxis = d3.axisBottom(xLinearScale);
+        var leftAxis = d3.axisLeft(yLinearScale);
 
-        var abbr = data.map(data => data.abbr);
-        console.log("abbr", abbr)
+    // append axis to chart
+            chartGroup.append("g")
+                .attr("transform", `translate(0, ${chartHeight})`)
+                .call(bottomAxis);
 
-        data.forEach(function(data1) {
-            data1.age = +data1.age;
-            data1.smokes = +data1.smokes;
-        });
+            chartGroup.append("g")
+                .call(leftAxis);
 
-
-     // Add x axis
-        var x = d3.scaleLinear()
-            .domain([28, 46])
-            .range([0, svgWidth]);
-        svg.append("g")
-            .call(d3.axisBottom(x));
-    
-    // Add y axis
-        var y = d3.scaleLinear()
-            .domain([0, 50])
-            .range([svgHeight, 0]);
-        svg.append("g")
-            .call(d3.axisLeft(y));
+                //.attr("cy", d => yLinearScale(d.smokes))
+                var y = d3.scaleLinear()
+                .domain([0, d3.max(SmokeData, d => d.smokes)])
+                .range([svgHeight, 0]);
 
     // Add graph circles
-        svg.append('g')
-            .selectAll("dot")
-            .data(data)
+        var circlesGroup = chartGroup.selectAll("circle")
+            .data(SmokeData)
             .enter()
             .append("circle")
-                .attr("cx", function (d) {return x(d.age);})
-                .attr("cy", function (d){return y(d.smokes);})
-                .attr("r", 10)
-                .style("fill", "#69b3a2")
-                .attr("opacity", 0.7);
-        
+            .attr("cx", d => xLinearScale(d.age))
+            .attr("cy", function(d){return y(d.smokes);})
+            .attr("r", "10")
+            .style("fill", "#69b3a2")
+            .attr("opacity", "0.7");
+            
+            
+            //.attr("y", d => yLinearScale(d.smokes))
+
         // Create State Labels
-        var circleLabels = chartGroup.selectAll(null).data(data).enter().append("text");
-
-            circleLabels
-                .attr("x", function(d) {return d.age; })
-                .attr("y", function(d) {return d.smokes; })
-                .text(function(d) { return d.abbr; })
-                .attr("font-family", "sans-serif")
-                .attr("font-size", "10px")
-                .attr("text-anchor", "middle")
-                .attr("fill", "black");
+            var circlesText = chartGroup.append("g")
+            .selectAll("text")
+            .data(SmokeData)
+            .enter()
+            .append("text")
+            .attr("x", d => xLinearScale(d.age))
+            .attr("y", function(d){return y(d.smokes);})
+            .text(d => (d.abbr))
+            .attr("font-family", "sans-serif")
+            .attr("font-size", "10px")
+            .attr("text-anchor", "middle")
+            .attr("fill", "black");
         
-        // Add Axes Labels
-            chartGroup.append("text")
-                .attr("transform", "rotate(-90)")
-                .attr("y", 0 - chartMargin.left + 40)
-                .attr("x", 0 - (svgHeight / 2))
-                .attr("class", "axisText")
-                .text("Smoking %");
+        // Appending X Axis
+        var xAxisGroup = chartGroup.append("g")
+            .attr("transform", `translate(${chartWidth / 2}, ${chartHeight + 20})`);
 
-            chartGroup.append("text")
-                .attr("transform", `translate(${svgWidth}, ${svgHeight + chartMargin.top + 30})`)
-                .attr("class", "axisText")
-                .text("Age");
+
+        xAxisGroup.append("text")
+            .attr("x", 0)
+            .attr("y", 40)
+            .attr("font-weight",1000)
+            .style('fill', 'black')
+            .classed("stateText", true)
+            .text("Age");
+
 });
 
+        // Appending Y Axis
+        var yAxisGroup = chartGroup.append("g")
+            .attr("transform", "rotate(-90)", `translate(${chartWidth}, ${chartHeight})`);
 
-
-
-// .catch(function(error){
-//     console.log(error);
+        yAxisGroup.append("text")
+            .attr("text-anchor", "center")
+            .attr("y", -60)
+            .attr("x", -300)
+            .attr("font-weight",1000)
+            .style('fill', 'black')
+            .classed("stateText", true)
+            .text("Smoker (%)");
