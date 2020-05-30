@@ -48,7 +48,7 @@ d3.csv("/assets/data/data.csv").then(function(SmokeData) {
 
         // Create y scale function
         var yLinearScale = d3.scaleLinear()
-            .domain([d3.extent(SmokeData, d => d.smokes)])
+            .domain(d3.extent(SmokeData, d => d.smokes))
             .range([chartHeight, 0]);
 
         var bottomAxis = d3.axisBottom(xLinearScale);
@@ -62,10 +62,10 @@ d3.csv("/assets/data/data.csv").then(function(SmokeData) {
             chartGroup.append("g")
                 .call(leftAxis);
 
-                //.attr("cy", d => yLinearScale(d.smokes))
                 var y = d3.scaleLinear()
                 .domain([0, d3.max(SmokeData, d => d.smokes)])
-                .range([svgHeight, 0]);
+                .range([svgHeight, 0])
+                
 
     // Add graph circles
         var circlesGroup = chartGroup.selectAll("circle")
@@ -77,9 +77,6 @@ d3.csv("/assets/data/data.csv").then(function(SmokeData) {
             .attr("r", "10")
             .style("fill", "#69b3a2")
             .attr("opacity", "0.7");
-            
-            
-            //.attr("y", d => yLinearScale(d.smokes))
 
         // Create State Labels
             var circlesText = chartGroup.append("g")
