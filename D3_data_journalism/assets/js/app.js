@@ -103,7 +103,7 @@ d3.csv("/assets/data/data.csv").then(function(SmokeData) {
             .attr("font-weight",1000)
             .style('fill', 'black')
             .classed("stateText", true)
-            .text("Age");
+            .text("Average Age");
 
 });
 
@@ -118,4 +118,4 @@ d3.csv("/assets/data/data.csv").then(function(SmokeData) {
             .attr("font-weight",1000)
             .style('fill', 'black')
             .classed("stateText", true)
-            .text("Smoker (%)");
+            .text("% of People That Smoke");
